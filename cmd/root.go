@@ -34,7 +34,7 @@ var (
 			Name: "response_status",
 			Help: "Status of HTTP response",
 		},
-		[]string{"status"},
+		[]string{"status", "url"},
 	)
 )
 
@@ -165,7 +165,7 @@ func request(c *http.Client, url string, agent string) (string, error) {
 		return "", err
 	}
 	totalRequests.WithLabelValues(url).Inc()
-	responseStatus.WithLabelValues(strconv.Itoa(resp.StatusCode)).Inc()
+	responseStatus.WithLabelValues(strconv.Itoa(resp.StatusCode), url).Inc()
 	return resp.Status, nil
 }
 
