@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,15 +20,27 @@ import (
 )
 
 var (
-	totalRequests = prometheus.NewCounter(prometheus.CounterOpts{
-		Name:        "http_requests_total",
-		Help:        "Number of http requests done.",
-		ConstLabels: prometheus.Labels{"version": "1234"},
-	})
+	totalRequests = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Number of get requests.",
+		},
+		[]string{"path"})
+)
+
+var (
+	responseStatus = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "response_status",
+			Help: "Status of HTTP response",
+		},
+		[]string{"status"},
+	)
 )
 
 func init() {
 	prometheus.MustRegister(totalRequests)
+	prometheus.MustRegister(responseStatus)
 }
 
 func Root() *cobra.Command {
@@ -151,8 +164,8 @@ func request(c *http.Client, url string, agent string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	totalRequests.Inc()
-
+	totalRequests.WithLabelValues(url).Inc()
+	responseStatus.WithLabelValues(strconv.Itoa(resp.StatusCode)).Inc()
 	return resp.Status, nil
 }
 
